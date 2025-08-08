@@ -1,0 +1,87 @@
+{
+  "extends": ["eslint:recommended", "plugin:prettier/recommended", "prettier"],
+  "plugins": ["import", "prettier", "@typescript-eslint"],
+  "env": {
+    "browser": true,
+    "jest": true,
+    "node": true,
+    "es6": true
+  },
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2020,
+    "sourceType": "module",
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "rules": {
+    "no-confusing-arrow": 0,
+    "strict": 0,
+    "implicit-arrow-linebreak": "off",
+    "import/prefer-default-export": "off",
+    "no-debugger": 0,
+    "multiple-empty-lines": 0,
+    "eol-last": 0,
+    "no-spaced-func": 0,
+    "func-call-spacing": 0,
+    "no-multiple-empty-lines": 0,
+    "no-unneeded-ternary": 0,
+    "no-case-declarations": 0,
+    "arrow-parens": 0,
+    "no-useless-escape": 0,
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ],
+    "no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ],
+    "no-redeclare": [
+      "error",
+      {
+        "builtinGlobals": false
+      }
+    ],
+    "no-plusplus": 0,
+    "no-nested-ternary": 0,
+    "no-shadow": "off",
+    "@typescript-eslint/no-shadow": ["error"],
+    "no-use-before-define": "off",
+    "@typescript-eslint/no-use-before-define": 0,
+    "lines-between-class-members": "off",
+    "default-param-last": 0,
+    "no-undef": "off",
+    "radix": 0,
+    "import/extensions": [
+      "error",
+      "ignorePackages",
+      {
+        "js": "never",
+        "jsx": "never",
+        "ts": "never",
+        "tsx": "never"
+      }
+    ]
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    },
+    "import/resolver": {
+      "node": {
+        "extensions": [".js", ".jsx", ".ts", ".tsx"]
+      },
+      "typescript": {
+        "alwaysTryTypes": true
+      }
+    }
+  }
+}
