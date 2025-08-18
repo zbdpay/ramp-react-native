@@ -1,26 +1,25 @@
-import { EnvironmentEnum, getWidgetUrl } from '@zbdpay/ramp-ts';
-import type { PostMessageData, RampError, RampLog, RampOptions } from '@zbdpay/ramp-ts';
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 'react';
+import { EnvironmentEnum, WidgetPostMessageEnum, getWidgetUrl } from '@zbdpay/ramp-ts';
+import type { PostMessageData, RampError, RampOptions } from '@zbdpay/ramp-ts';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef } from 'react';
 import { WebView } from 'react-native-webview';
 import type { WebViewMessageEvent, WebViewProps } from 'react-native-webview';
 
-// React Native compatible URL building function
-const buildWidgetUrlRN = ({ 
-  baseUrl, 
-  sessionToken, 
-  secret 
-}: { 
-  baseUrl: string; 
-  sessionToken: string; 
-  secret?: string; 
+const buildWidgetUrlRN = ({
+  baseUrl,
+  sessionToken,
+  secret,
+}: {
+  baseUrl: string;
+  sessionToken: string;
+  secret?: string;
 }): string => {
   const separator = baseUrl.includes('?') ? '&' : '?';
   let url = `${baseUrl}${separator}session_token=${encodeURIComponent(sessionToken)}`;
-  
+
   if (secret) {
     url += `&secret=${encodeURIComponent(secret)}`;
   }
-  
+
   return url;
 };
 
@@ -49,6 +48,15 @@ export const ZBDRamp = forwardRef<ZBDRampRef, ZBDRampProps>(({ style, webViewPro
     validateOptions();
   }, [validateOptions]);
 
+  const widgetUrl = useMemo(() => {
+    const baseUrl = getWidgetUrl(rampOptions.environment || EnvironmentEnum.Production);
+    return buildWidgetUrlRN({
+      baseUrl,
+      sessionToken: rampOptions.sessionToken,
+      secret: rampOptions.secret,
+    });
+  }, [rampOptions.sessionToken, rampOptions.environment, rampOptions.secret]);
+
   const handleMessage = useCallback(
     (event: WebViewMessageEvent) => {
       try {
@@ -56,11 +64,11 @@ export const ZBDRamp = forwardRef<ZBDRampRef, ZBDRampProps>(({ style, webViewPro
         const { type, payload } = data;
 
         switch (type) {
-          case 'WIDGET_SUCCESS':
+          case WidgetPostMessageEnum.TransactionComplete:
             rampOptions.onSuccess?.(payload);
             break;
 
-          case 'WIDGET_ERROR':
+          case WidgetPostMessageEnum.Error:
             const error: RampError = {
               code: payload?.code || 'UNKNOWN_ERROR',
               message: payload?.message || 'An error occurred',
@@ -69,25 +77,20 @@ export const ZBDRamp = forwardRef<ZBDRampRef, ZBDRampProps>(({ style, webViewPro
             rampOptions.onError?.(error);
             break;
 
-          case 'WIDGET_STEP_CHANGE':
+          case WidgetPostMessageEnum.StepChange:
             rampOptions.onStepChange?.(payload?.step);
             break;
 
-          case 'WIDGET_LOG':
-            const log: RampLog = {
-              level: payload?.level || 'info',
-              message: payload?.message || '',
-              data: payload?.data,
-            };
-            rampOptions.onLog?.(log);
-            break;
-
-          case 'WIDGET_READY':
+          case WidgetPostMessageEnum.Ready:
             rampOptions.onReady?.();
             break;
 
-          case 'WIDGET_CLOSE':
-            rampOptions.onClose?.();
+          case WidgetPostMessageEnum.KYCStatusChange:
+            rampOptions.onLog?.({
+              level: 'info',
+              message: 'KYC Status Change',
+              data: payload,
+            });
             break;
 
           default:
@@ -107,7 +110,6 @@ export const ZBDRamp = forwardRef<ZBDRampRef, ZBDRampProps>(({ style, webViewPro
   }, []);
 
   const updateConfig = useCallback((config: Partial<RampOptions>) => {
-    // Configuration updates can be handled here if needed
     console.log('Config update:', config);
   }, []);
 
@@ -115,7 +117,6 @@ export const ZBDRamp = forwardRef<ZBDRampRef, ZBDRampProps>(({ style, webViewPro
     webViewRef.current?.reload();
   }, []);
 
-  // Expose methods via ref
   useImperativeHandle(
     ref,
     () => ({
@@ -126,23 +127,6 @@ export const ZBDRamp = forwardRef<ZBDRampRef, ZBDRampProps>(({ style, webViewPro
     [sendMessage, updateConfig, reload]
   );
 
-  // Build widget URL
-  const baseUrl = getWidgetUrl(rampOptions.environment || EnvironmentEnum.Production);
-  const widgetUrl = buildWidgetUrlRN({
-    baseUrl,
-    sessionToken: rampOptions.sessionToken,
-    secret: rampOptions.secret,
-  });
-  
-  console.log('ZBD Ramp Debug:', {
-    baseUrl,
-    sessionToken: rampOptions.sessionToken?.substring(0, 20) + '...',
-    widgetUrl,
-    environment: rampOptions.environment,
-    hasSecret: !!rampOptions.secret,
-  });
-
-  // Handle WebView load
   const handleLoadEnd = useCallback(() => {
     console.log('ZBD Ramp WebView: Load ended successfully');
   }, []);
@@ -189,6 +173,7 @@ export const ZBDRamp = forwardRef<ZBDRampRef, ZBDRampProps>(({ style, webViewPro
       mediaPlaybackRequiresUserAction={false}
       startInLoadingState={true}
       mixedContentMode="compatibility"
+      incognito={false}
       {...webViewProps}
     />
   );
@@ -196,7 +181,6 @@ export const ZBDRamp = forwardRef<ZBDRampRef, ZBDRampProps>(({ style, webViewPro
 
 ZBDRamp.displayName = 'ZBDRamp';
 
-// Hook for programmatic usage
 export const useZBDRamp = (_options: ZBDRampProps) => {
   const rampRef = useRef<ZBDRampRef>(null);
 
@@ -220,7 +204,6 @@ export const useZBDRamp = (_options: ZBDRampProps) => {
   };
 };
 
-// Re-export types from core package
 export type {
   RampConfig,
   RampCallbacks,
@@ -229,4 +212,5 @@ export type {
   RampLog,
   EnvironmentEnum,
   PostMessageData,
+  WidgetPostMessageEnum,
 } from '@zbdpay/ramp-ts';

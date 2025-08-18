@@ -25,6 +25,19 @@ yarn add @zbdpay/ramp-react-native react-native-webview
 cd ios && pod install
 ```
 
+### Android Setup
+
+Add the following permissions to your `android/app/src/main/AndroidManifest.xml`:
+
+```xml
+<!-- Essential permissions for ZBD Ramp WebView -->
+<uses-permission android:name="android.permission.CAMERA" />
+<uses-permission android:name="android.permission.RECORD_AUDIO" />
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+```
+
+These permissions are required to prevent `permissions_unavailable` errors that can occur when the ZBD Ramp widget tries to access device features (camera for document verification, microphone for liveness detection, etc.) within the WebView context.
+
 ## Quick Start for Development
 
 ### 1. Clone and Setup
