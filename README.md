@@ -21,9 +21,31 @@ yarn add @zbdpay/ramp-react-native react-native-webview
 
 ### iOS Setup
 
+**1. Install CocoaPods dependencies:**
 ```bash
 cd ios && pod install
 ```
+
+**2. Add Privacy Permissions to Info.plist:**
+
+Add the following entries to your `ios/{YourAppName}/Info.plist`:
+
+```xml
+<!-- Essential permissions for ZBD Ramp WebView -->
+<key>NSCameraUsageDescription</key>
+<string>ZBD Ramp needs camera access for document verification and identity verification processes.</string>
+
+<key>NSMicrophoneUsageDescription</key>
+<string>ZBD Ramp needs microphone access for liveness detection during identity verification.</string>
+
+<key>NSPhotoLibraryUsageDescription</key>
+<string>ZBD Ramp needs photo library access to upload documents for verification purposes.</string>
+
+<key>NSPhotoLibraryAddUsageDescription</key>
+<string>ZBD Ramp may save verification photos to your photo library.</string>
+```
+
+> **Note**: These permissions are required for the ZBD Ramp widget to access device features like camera (document verification) and microphone (liveness detection) within the WebView context. You can customize the permission descriptions to match your app's language and privacy policy.
 
 ### Android Setup
 
