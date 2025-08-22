@@ -5,7 +5,6 @@ This is a complete React Native example app demonstrating how to integrate the `
 ## Features
 
 - **Session Token Configuration**: Enter your session token to test payments
-- **Environment Selection**: Switch between Production, X1, X2, and Voltorb sandbox environments  
 - **Debug Logging**: Real-time logging of widget events and WebView interactions
 - **Full Widget Integration**: Complete payment flow with success/error handling
 - **Responsive UI**: Clean, modern interface with proper React Native styling
@@ -62,7 +61,6 @@ npm start
 ## Usage
 
 1. **Enter Session Token**: Paste your session token from the ZBD API
-2. **Select Environment**: Choose between production or sandbox environments
 3. **Enable Debug Logging**: Toggle to see detailed logs of widget interactions
 4. **Start Payment**: Tap to open the ZBD Ramp widget
 5. **Complete Payment**: Follow the payment flow in the widget
@@ -71,7 +69,6 @@ npm start
 ## Code Structure
 
 - `App.tsx` - Main application component with:
-  - Session token input and environment selection
   - ZBDRamp widget integration
   - Comprehensive event handling (success, error, logging)
   - Debug logging interface
@@ -83,7 +80,6 @@ npm start
 ```tsx
 <ZBDRamp
   sessionToken={sessionToken}
-  environment={environment}
   onSuccess={handleSuccess}
   onError={handleError}
   onStepChange={handleStepChange}
@@ -101,12 +97,6 @@ npm start
 - **onLog**: Debug logging for development
 - **onReady**: Widget load completion
 - **onClose**: User-initiated widget closure
-
-### Environment Management
-- Production: `EnvironmentEnum.Production`
-- Sandbox X1: `EnvironmentEnum.X1`
-- Sandbox X2: `EnvironmentEnum.X2`
-- Sandbox Voltorb: `EnvironmentEnum.Voltorb`
 
 ## Debugging
 
@@ -131,4 +121,3 @@ Enable "Debug Logging" in the app to see real-time events in the logs section.
 - This example uses local dependency `"@zbdpay/ramp-react-native": "../"` for development
 - For production apps, install from npm: `npm install @zbdpay/ramp-react-native`
 - Session tokens are temporary and need to be generated for each payment session
-- Always test in sandbox environments before using production

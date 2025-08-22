@@ -11,8 +11,7 @@ import {
   TextInput,
   Switch,
 } from 'react-native';
-import { ZBDRamp } from '../src/index';
-import { EnvironmentEnum } from '@zbdpay/ramp-ts';
+import { ZBDRamp, initRampSession, QuoteCurrencyEnum, BaseCurrencyEnum } from '../src/index';
 import type { ZBDRampRef, RampError, RampLog } from '../src/index';
 
 interface FormData {
@@ -27,7 +26,6 @@ interface FormData {
 
 const App = () => {
   const [sessionToken, setSessionToken] = useState('');
-  const [environment, setEnvironment] = useState(EnvironmentEnum.X1);
   const [showRamp, setShowRamp] = useState(false);
   const [debugMode, setDebugMode] = useState(true);
   const [logs, setLogs] = useState<string[]>([]);
@@ -42,13 +40,6 @@ const App = () => {
     referenceId: ''
   });
   const rampRef = useRef<ZBDRampRef>(null);
-
-  const environments = [
-    { label: 'Production', value: EnvironmentEnum.Production },
-    { label: 'X1 Sandbox', value: EnvironmentEnum.X1 },
-    { label: 'X2 Sandbox', value: EnvironmentEnum.X2 },
-    { label: 'Voltorb Sandbox', value: EnvironmentEnum.Voltorb },
-  ];
 
   const addLog = (message: string) => {
     const timestamp = new Date().toLocaleTimeString();
@@ -71,51 +62,27 @@ const App = () => {
     addLog('Creating session token...');
 
     try {
-      const apiUrl = environment === EnvironmentEnum.Production
-        ? 'https://api.zbdpay.com/v1/ramp-widget'
-        : `https://${environment}.zbdpay.com/api/v1/ramp-widget`;
-
-      const requestBody = {
+      const response = await initRampSession({
+        apikey: apiKey,
         email,
-        quote_currency: quoteCurrency,
-        base_currency: baseCurrency,
         destination,
+        quote_currency: quoteCurrency as QuoteCurrencyEnum,
+        base_currency: baseCurrency as BaseCurrencyEnum,
         webhook_url: webhookUrl,
-        ...(referenceId && { reference_id: referenceId }),
+        reference_id: referenceId || undefined,
         metadata: {
           created_from: 'ramp-react-native-example',
-          environment,
         },
-      };
-
-      addLog(`API URL: ${apiUrl}`);
-      addLog(`Request body: ${JSON.stringify(requestBody)}`);
-
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          apikey: apiKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`API Error ${response.status}: ${errorText}`);
-      }
+      addLog(`Session created: ${JSON.stringify(response)}`);
 
-      const data = await response.json();
-      addLog(`Session created: ${JSON.stringify(data)}`);
-
-      const token = data.data.session_token;
-
-      if (token) {
-        setSessionToken(token);
-        addLog(`Session token received: ${token.substring(0, 20)}...`);
+      if (response.success && response.data.session_token) {
+        setSessionToken(response.data.session_token);
+        addLog(`Session token received: ${response.data.session_token.substring(0, 20)}...`);
         setShowRamp(true);
       } else {
-        throw new Error('No session token found in API response');
+        throw new Error(response.error || 'No session token found in API response');
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -192,8 +159,6 @@ const App = () => {
           <ZBDRamp
             ref={rampRef}
             sessionToken={sessionToken}
-            environment={environment}
-            secret={environment === EnvironmentEnum.Production ? 'secret' : undefined}
             onSuccess={handleSuccess}
             onError={handleError}
             onStepChange={handleStepChange}
@@ -288,26 +253,6 @@ const App = () => {
               />
             </>
           ) : null}
-
-          <Text style={styles.label}>Environment:</Text>
-          <View style={styles.environmentContainer}>
-            {environments.map((env) => (
-              <TouchableOpacity
-                key={env.value}
-                style={[
-                  styles.environmentButton,
-                  environment === env.value && styles.environmentButtonActive
-                ]}
-                onPress={() => setEnvironment(env.value)}>
-                <Text style={[
-                  styles.environmentButtonText,
-                  environment === env.value && styles.environmentButtonTextActive
-                ]}>
-                  {env.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
 
           <View style={styles.switchContainer}>
             <Text style={styles.label}>Debug Logging:</Text>
@@ -463,33 +408,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
     marginBottom: 16,
     textAlignVertical: 'top',
-  },
-  environmentContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 16,
-    gap: 8,
-  },
-  environmentButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: '#f9f9f9',
-  },
-  environmentButtonActive: {
-    backgroundColor: '#ff6b35',
-    borderColor: '#ff6b35',
-  },
-  environmentButtonText: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
-  },
-  environmentButtonTextActive: {
-    color: '#ffffff',
-    fontWeight: '600',
   },
   switchContainer: {
     flexDirection: 'row',

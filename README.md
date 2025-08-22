@@ -141,6 +141,27 @@ import { ZBDRamp, EnvironmentEnum } from '@zbdpay/ramp-react-native';
 
 ## Quick Start
 
+### 1. Create Session Token
+
+First, create a session token using the built-in `initRampSession` function:
+
+```tsx
+import { initRampSession, QuoteCurrencyEnum, BaseCurrencyEnum } from '@zbdpay/ramp-react-native';
+
+const response = await initRampSession({
+  apikey: 'your-zbd-api-key',
+  email: 'user@example.com',
+  destination: 'lightning-address-or-username',
+  quote_currency: QuoteCurrencyEnum.USD,
+  base_currency: BaseCurrencyEnum.BTC,
+  webhook_url: 'https://your-webhook-url.com',
+});
+
+const sessionToken = response.data.session_token;
+```
+
+### 2. Use ZBDRamp Component
+
 ```tsx
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
@@ -625,6 +646,12 @@ import type {
   RampError,
   RampLog,
   PostMessageData,
+  InitRampSessionConfig,
+  InitRampSessionData,
+  InitRampSessionResponse,
+  QuoteCurrencyEnum,
+  BaseCurrencyEnum,
+  EnvironmentEnum,
 } from '@zbdpay/ramp-react-native';
 ```
 
