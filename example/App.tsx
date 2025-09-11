@@ -12,14 +12,16 @@ import {
   Switch,
 } from 'react-native';
 import { ZBDRamp, initRampSession, QuoteCurrencyEnum, BaseCurrencyEnum } from '../src/index';
-import type { ZBDRampRef, RampError, RampLog } from '../src/index';
+import type { ZBDRampRef, RampError, RampLog, InitRampSessionConfig } from '../src/index';
 
 interface FormData {
   apiKey: string;
+  authMethod: 'email' | 'access_token';
   email: string;
+  accessToken: string;
   destination: string;
-  quoteCurrency: string;
-  baseCurrency: string;
+  quoteCurrency: QuoteCurrencyEnum;
+  baseCurrency: BaseCurrencyEnum;
   webhookUrl: string;
   referenceId: string;
 }
@@ -32,10 +34,12 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     apiKey: '',
+    authMethod: 'email',
     email: '',
+    accessToken: '',
     destination: '',
-    quoteCurrency: 'USD',
-    baseCurrency: 'BTC',
+    quoteCurrency: QuoteCurrencyEnum.USD,
+    baseCurrency: BaseCurrencyEnum.BTC,
     webhookUrl: 'https://webhook.site/79f9c0fa-8cfa-4762-9c28-e94290e8c2e1',
     referenceId: ''
   });
@@ -43,7 +47,7 @@ const App = () => {
 
   const addLog = (message: string) => {
     const timestamp = new Date().toLocaleTimeString();
-    setLogs(prev => [`[${timestamp}] ${message}`, ...prev.slice(0, 19)]); // Keep last 20 logs
+    setLogs(prev => [`[${timestamp}] ${message}`, ...prev.slice(0, 19)]);
   };
 
   const handleInputChange = (field: keyof FormData, value: string) => {
@@ -51,10 +55,20 @@ const App = () => {
   };
 
   const createSessionToken = async () => {
-    const { apiKey, email, destination, quoteCurrency, baseCurrency, webhookUrl, referenceId } = formData;
+    const { apiKey, authMethod, email, accessToken, destination, quoteCurrency, baseCurrency, webhookUrl, referenceId } = formData;
 
-    if (!apiKey || !email || !destination) {
-      Alert.alert('Error', 'Please fill in API Key, Email, and Destination fields');
+    if (!apiKey || !destination) {
+      Alert.alert('Error', 'Please fill in API Key and Destination fields');
+      return;
+    }
+
+    if (authMethod === 'email' && !email) {
+      Alert.alert('Error', 'Please fill in the Email field');
+      return;
+    }
+
+    if (authMethod === 'access_token' && !accessToken) {
+      Alert.alert('Error', 'Please fill in the Access Token field');
       return;
     }
 
@@ -62,18 +76,23 @@ const App = () => {
     addLog('Creating session token...');
 
     try {
-      const response = await initRampSession({
+      const baseConfig = {
         apikey: apiKey,
-        email,
         destination,
-        quote_currency: quoteCurrency as QuoteCurrencyEnum,
-        base_currency: baseCurrency as BaseCurrencyEnum,
+        quote_currency: quoteCurrency,
+        base_currency: baseCurrency,
         webhook_url: webhookUrl,
         reference_id: referenceId || undefined,
         metadata: {
           created_from: 'ramp-react-native-example',
         },
-      });
+      };
+
+      const sessionConfig: InitRampSessionConfig = authMethod === 'email' 
+        ? { ...baseConfig, email }
+        : { ...baseConfig, access_token: accessToken };
+
+      const response = await initRampSession(sessionConfig);
 
       addLog(`Session created: ${JSON.stringify(response)}`);
 
@@ -164,7 +183,6 @@ const App = () => {
             onStepChange={handleStepChange}
             onLog={handleLog}
             onReady={handleReady}
-            onClose={handleClose}
             style={styles.webview}
             webViewProps={{
               onLoadStart: () => addLog('WEBVIEW: Load started'),
@@ -204,15 +222,50 @@ const App = () => {
             secureTextEntry={true}
           />
           
-          <Text style={styles.label}>Email:</Text>
-          <TextInput
-            style={styles.textInput}
-            placeholder="user@example.com"
-            value={formData.email}
-            onChangeText={(value) => handleInputChange('email', value)}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
+          <Text style={styles.label}>Authentication Method:</Text>
+          <View style={styles.pickerContainer}>
+            <TouchableOpacity
+              style={[styles.pickerButton, formData.authMethod === 'email' && styles.selectedPickerButton]}
+              onPress={() => handleInputChange('authMethod', 'email')}>
+              <Text style={[styles.pickerText, formData.authMethod === 'email' && styles.selectedPickerText]}>
+                Email
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.pickerButton, formData.authMethod === 'access_token' && styles.selectedPickerButton]}
+              onPress={() => handleInputChange('authMethod', 'access_token')}>
+              <Text style={[styles.pickerText, formData.authMethod === 'access_token' && styles.selectedPickerText]}>
+                Access Token
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {formData.authMethod === 'email' && (
+            <>
+              <Text style={styles.label}>Email:</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="user@example.com"
+                value={formData.email}
+                onChangeText={(value) => handleInputChange('email', value)}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
+            </>
+          )}
+
+          {formData.authMethod === 'access_token' && (
+            <>
+              <Text style={styles.label}>Access Token:</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Enter user access token"
+                value={formData.accessToken}
+                onChangeText={(value) => handleInputChange('accessToken', value)}
+                autoCapitalize="none"
+              />
+            </>
+          )}
           
           <Text style={styles.label}>Destination:</Text>
           <TextInput
@@ -408,6 +461,32 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
     marginBottom: 16,
     textAlignVertical: 'top',
+  },
+  pickerContainer: {
+    flexDirection: 'row',
+    marginBottom: 16,
+  },
+  pickerButton: {
+    flex: 1,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: '#f0f0f0',
+    borderColor: '#ddd',
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectedPickerButton: {
+    backgroundColor: '#ff6b35',
+    borderColor: '#ff6b35',
+  },
+  pickerText: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+  },
+  selectedPickerText: {
+    color: '#ffffff',
   },
   switchContainer: {
     flexDirection: 'row',

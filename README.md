@@ -9,7 +9,6 @@ React Native wrapper for ZBD Ramp widget that enables Bitcoin Lightning Network 
 - ✅ **Cross-Platform**: Works on iOS and Android
 - ✅ **Ref API**: Access to WebView methods and ramp instance
 - ✅ **Hook Support**: `useZBDRamp` hook for programmatic usage
-- ✅ **Environment Support**: Production and sandbox environments (x1, x2, voltorb)
 
 ## Installation
 
@@ -108,7 +107,6 @@ npm run android
 
 The example app provides:
 - **Session Token Creation**: Built-in API integration to create session tokens
-- **Environment Selection**: Switch between Production, X1, X2, and Voltorb environments
 - **Debug Logging**: Real-time logging of widget events and interactions  
 - **Full Integration**: Complete ZBDRamp component with all event handlers
 - **Error Handling**: Comprehensive error display and logging
@@ -128,11 +126,10 @@ cd ios && pod install && cd ..
 Then import and use in your app:
 
 ```tsx
-import { ZBDRamp, EnvironmentEnum } from '@zbdpay/ramp-react-native';
+import { ZBDRamp } from '@zbdpay/ramp-react-native';
 
 <ZBDRamp
   sessionToken="your-session-token"
-  environment={EnvironmentEnum.Production}
   onSuccess={(data) => console.log('Success:', data)}
   onError={(error) => console.error('Error:', error)}
   style={{ flex: 1 }}
@@ -148,9 +145,20 @@ First, create a session token using the built-in `initRampSession` function:
 ```tsx
 import { initRampSession, QuoteCurrencyEnum, BaseCurrencyEnum } from '@zbdpay/ramp-react-native';
 
+// Using email authentication
 const response = await initRampSession({
   apikey: 'your-zbd-api-key',
   email: 'user@example.com',
+  destination: 'lightning-address-or-username',
+  quote_currency: QuoteCurrencyEnum.USD,
+  base_currency: BaseCurrencyEnum.BTC,
+  webhook_url: 'https://your-webhook-url.com',
+});
+
+// Or using access token authentication
+const response = await initRampSession({
+  apikey: 'your-zbd-api-key',
+  access_token: 'user-access-token',
   destination: 'lightning-address-or-username',
   quote_currency: QuoteCurrencyEnum.USD,
   base_currency: BaseCurrencyEnum.BTC,
@@ -165,14 +173,13 @@ const sessionToken = response.data.session_token;
 ```tsx
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { ZBDRamp, EnvironmentEnum } from '@zbdpay/ramp-react-native';
+import { ZBDRamp } from '@zbdpay/ramp-react-native';
 
 function App() {
   return (
     <View style={styles.container}>
       <ZBDRamp
         sessionToken="your-session-token"
-        environment={EnvironmentEnum.Production}
         onSuccess={(data) => console.log('Success:', data)}
         onError={(error) => console.error('Error:', error)}
         onStepChange={(step) => console.log('Step:', step)}
@@ -197,11 +204,8 @@ const styles = StyleSheet.create({
 Enable debugging by adding logging callbacks and WebView event handlers:
 
 ```tsx
-import { EnvironmentEnum } from '@zbdpay/ramp-react-native';
-
 <ZBDRamp
   sessionToken="your-session-token"
-  environment={EnvironmentEnum.X1}
   onLog={(log) => {
     console.log(`[${log.level.toUpperCase()}] ${log.message}`, log.data);
   }}
@@ -212,6 +216,35 @@ import { EnvironmentEnum } from '@zbdpay/ramp-react-native';
     onError={(error) => console.error('WebView error:', error)}
   }}
 />
+```
+
+## Access Token Refresh
+
+If you're using access token authentication, you can refresh expired tokens using the `refreshAccessToken` function:
+
+```tsx
+import { refreshAccessToken } from '@zbdpay/ramp-react-native';
+
+const handleRefreshToken = async () => {
+  try {
+    const response = await refreshAccessToken({
+      apikey: 'your-zbd-api-key',
+      access_token_id: 'user-access-token-id',
+      refresh_token: 'user-refresh-token',
+    });
+    
+    if (response.success) {
+      const newAccessToken = response.data.access_token;
+      const newRefreshToken = response.data.refresh_token;
+      // Store the new tokens securely
+      console.log('Token refreshed successfully');
+    } else {
+      console.error('Token refresh failed:', response.error);
+    }
+  } catch (error) {
+    console.error('Error refreshing token:', error);
+  }
+};
 ```
 
 ## API Reference
@@ -225,7 +258,6 @@ React Native component that renders the ZBD Ramp widget using WebView.
 ```tsx
 interface ZBDRampProps {
   sessionToken: string;                      // Required: Session token from ZBD API
-  environment?: EnvironmentEnum;             // Default: EnvironmentEnum.Production
   style?: WebViewProps['style'];            // WebView style
   webViewProps?: Omit<WebViewProps, 'source' | 'onMessage' | 'style'>;  // Additional WebView props
   // Callbacks
@@ -235,17 +267,6 @@ interface ZBDRampProps {
   onLog?: (log: RampLog) => void;           // Debug/info logging
   onReady?: () => void;                      // Widget fully loaded
   onClose?: () => void;                      // User closed widget
-}
-```
-
-#### Environment Enum
-
-```tsx
-enum EnvironmentEnum {
-  Production = 'production',
-  X1 = 'x1',
-  X2 = 'x2', 
-  Voltorb = 'voltorb',
 }
 ```
 
@@ -274,7 +295,7 @@ const { rampRef, sendMessage, updateConfig, reload } = useZBDRamp(options);
 ```tsx
 import React from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
-import { ZBDRamp, EnvironmentEnum } from '@zbdpay/ramp-react-native';
+import { ZBDRamp } from '@zbdpay/ramp-react-native';
 
 function PaymentScreen() {
   const handleSuccess = (data: any) => {
@@ -291,7 +312,6 @@ function PaymentScreen() {
     <View style={styles.container}>
       <ZBDRamp
         sessionToken="your-session-token"
-        environment={EnvironmentEnum.Production}
         onSuccess={handleSuccess}
         onError={handleError}
         style={styles.webview}
@@ -317,7 +337,7 @@ const styles = StyleSheet.create({
 ```tsx
 import React, { useRef } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { ZBDRamp, EnvironmentEnum } from '@zbdpay/ramp-react-native';
+import { ZBDRamp } from '@zbdpay/ramp-react-native';
 import type { ZBDRampRef } from '@zbdpay/ramp-react-native';
 
 function ControlledPayment() {
@@ -346,7 +366,6 @@ function ControlledPayment() {
       <ZBDRamp
         ref={rampRef}
         sessionToken="your-session-token"
-        environment={EnvironmentEnum.X1}
         onSuccess={(data) => console.log('Success:', data)}
         onError={(error) => console.error('Error:', error)}
         style={styles.webview}
@@ -387,14 +406,13 @@ const styles = StyleSheet.create({
 ```tsx
 import React, { useState } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Modal } from 'react-native';
-import { ZBDRamp, useZBDRamp, EnvironmentEnum } from '@zbdpay/ramp-react-native';
+import { ZBDRamp, useZBDRamp } from '@zbdpay/ramp-react-native';
 
 function HookExample() {
   const [isVisible, setIsVisible] = useState(false);
   
   const { rampRef, sendMessage, updateConfig, reload } = useZBDRamp({
     sessionToken: 'your-session-token',
-    environment: EnvironmentEnum.Production,
     onSuccess: (data) => {
       console.log('Payment successful:', data);
       setIsVisible(false);
@@ -429,7 +447,6 @@ function HookExample() {
           <ZBDRamp
             ref={rampRef}
             sessionToken="your-session-token"
-            environment={EnvironmentEnum.Production}
             onSuccess={(data) => {
               console.log('Success:', data);
               setIsVisible(false);
@@ -483,14 +500,13 @@ const styles = StyleSheet.create({
 ```tsx
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { ZBDRamp, EnvironmentEnum } from '@zbdpay/ramp-react-native';
+import { ZBDRamp } from '@zbdpay/ramp-react-native';
 
 function CustomWebViewRamp() {
   return (
     <View style={styles.container}>
       <ZBDRamp
         sessionToken="your-session-token"
-        environment={EnvironmentEnum.Production}
         style={styles.webview}
         webViewProps={{
           bounces: false,
@@ -523,7 +539,7 @@ const styles = StyleSheet.create({
 ```tsx
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { ZBDRamp, EnvironmentEnum } from '@zbdpay/ramp-react-native';
+import { ZBDRamp } from '@zbdpay/ramp-react-native';
 import type { RampError } from '@zbdpay/ramp-react-native';
 
 function PaymentWithErrorHandling() {
@@ -580,7 +596,6 @@ function PaymentWithErrorHandling() {
       {!error && (
         <ZBDRamp
           sessionToken="your-session-token"
-          environment={EnvironmentEnum.Production}
           onReady={handleReady}
           onError={handleError}
           onSuccess={() => {
@@ -649,9 +664,11 @@ import type {
   InitRampSessionConfig,
   InitRampSessionData,
   InitRampSessionResponse,
+  RefreshAccessTokenConfig,
+  RefreshAccessTokenData,
+  RefreshAccessTokenResponse,
   QuoteCurrencyEnum,
   BaseCurrencyEnum,
-  EnvironmentEnum,
 } from '@zbdpay/ramp-react-native';
 ```
 

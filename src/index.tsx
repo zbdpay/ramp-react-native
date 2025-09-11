@@ -216,6 +216,9 @@ export type {
   InitRampSessionConfig,
   InitRampSessionData,
   InitRampSessionResponse,
+  RefreshAccessTokenConfig,
+  RefreshAccessTokenData,
+  RefreshAccessTokenResponse,
 } from '@zbdpay/ramp-ts';
 
-export { QuoteCurrencyEnum, BaseCurrencyEnum, initRampSession } from '@zbdpay/ramp-ts';
+export { QuoteCurrencyEnum, BaseCurrencyEnum, initRampSession, refreshAccessToken } from '@zbdpay/ramp-ts';
