@@ -13,7 +13,7 @@
     "@react-native/babel-preset": "^0.80.2",
     "@zbdpay/ramp-react-native": "^1.0.2",
     "react": "18.2.0",
-    "react-native": "0.72.6",
+    "react-native": "^0.72.17",
     "react-native-webview": "^13.6.4"
   },
   "devDependencies": {

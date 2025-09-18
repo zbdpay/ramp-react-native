@@ -92,3 +92,31 @@ flutter/pubspec.lock
 # Storybook build outputs
 .out
 .storybook-out
+
+# React Native example files
+example/ios/build/
+example/android/build/
+example/android/app/build/
+example/android/.gradle/
+example/android/gradle/
+example/android/gradlew
+example/android/gradlew.bat
+example/android/gradle*.lock
+example/android/gradle*/
+example/android/app/gradle*/
+example/android/**/*.bin
+example/android/**/*.lock
+example/android/**/executionHistory/
+example/android/**/fileHashes/
+example/android/**/resourceHashesCache.bin
+example/android/**/buildOutputCleanup/
+example/android/**/outputFiles.bin
+example/android/file-system.probe
+example/package-lock.json
+example/ios/Pods/
+example/ios/*.xcworkspace/
+example/ios/*.xcuserdata/
+example/metro-cache/
+example/.expo/
+example/.bundle/
+example/vendor/bundle/
