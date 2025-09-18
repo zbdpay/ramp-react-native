@@ -1,6 +1,6 @@
 {
   "name": "@zbdpay/ramp-react-native",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "React Native wrapper for ZBD Ramp widget",
   "main": "dist/src/index.js",
   "types": "dist/index.d.ts",
@@ -25,6 +25,7 @@
     "zbd",
     "zebedee",
     "ramp",
+    "zbdpay",
     "bitcoin",
     "lightning",
     "react-native",
@@ -66,6 +67,6 @@
     "react-native-webview": ">=11.0.0"
   },
   "dependencies": {
-    "@zbdpay/ramp-ts": "^1.1.7"
+    "@zbdpay/ramp-ts": "^1.1.8"
   }
 }

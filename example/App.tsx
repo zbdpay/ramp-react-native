@@ -96,12 +96,12 @@ const App = () => {
 
       addLog(`Session created: ${JSON.stringify(response)}`);
 
-      if (response.success && response.data.session_token) {
+      if (response.success && response.data && response.data.session_token) {
         setSessionToken(response.data.session_token);
         addLog(`Session token received: ${response.data.session_token.substring(0, 20)}...`);
         setShowRamp(true);
       } else {
-        throw new Error(response.error || 'No session token found in API response');
+        throw new Error(response.error?.message || 'No session token found in API response');
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -134,11 +134,6 @@ const App = () => {
 
   const handleReady = () => {
     addLog('WIDGET: Ready');
-  };
-
-  const handleClose = () => {
-    addLog('WIDGET: Closed by user');
-    setShowRamp(false);
   };
 
   const startPayment = () => {
